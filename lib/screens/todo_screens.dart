@@ -7,46 +7,82 @@ class TodoScreen extends StatefulWidget {
   _TodoScreenState createState() => _TodoScreenState();
 }
 
+class Todo {
+  final int index;
+  final String label;
+
+  Todo(this.index, this.label);
+}
+
 class _TodoScreenState extends State<TodoScreen> {
-  final List<Widget> myTodos = [];
+  final List<Todo> myTodos = [];
   TextEditingController controller = new TextEditingController();
   int count = 0;
 
   deleteTodo(index) {
     setState(() {
-      myTodos.removeAt(index);
+      myTodos.removeWhere((element) => element.index == index);
     });
   }
 
   addTodo() {
+    final text = controller.text;
+
     setState(() {
-      myTodos.add(Container(
-        child: Column(children: [
-          Text('Todo ${controller.text}'),
-          TextButton(
-            child: Icon(Icons.delete),
-            onPressed: () => deleteTodo(myTodos.length),
-          ),
-        ]),
-      ));
+      if (text.isNotEmpty) {
+        myTodos.add(Todo(count, text));
+      }
     });
+
+    controller.text = '';
+
+    count++;
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text('Todo Lindão')),
-      body: Container(
-        child: Column(
-          children: [
-            TextField(
-              controller: controller,
+      body: Column(
+        children: [
+          TextField(
+            decoration: InputDecoration(
+              hintText: 'Escreva seu TODO',
             ),
-            Container(
-                padding: EdgeInsets.only(top: 12),
-                child: Column(children: myTodos))
-          ],
-        ),
+            controller: controller,
+          ),
+          Expanded(
+            child: ListView(
+              children: myTodos
+                  .map(
+                    (todo) => Dismissible(
+                      onDismissed: (direction) {
+                        deleteTodo(todo.index);
+                      },
+                      key: Key(todo.index.toString()),
+                      child: Container(
+                        padding: const EdgeInsets.all(10),
+                        color: Colors.amber,
+                        margin: const EdgeInsets.all(2),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text('Todo: ${todo.label}'),
+                            TextButton(
+                              child: Icon(Icons.delete),
+                              onPressed: () {
+                                deleteTodo(todo.index);
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  )
+                  .toList(),
+            ),
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton(
         child: Icon(Icons.add),
